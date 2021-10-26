@@ -10,5 +10,5 @@ FROM nginx
 # it is not nginx exposed to the world as
 # a proxy router: React Server/Express Server
 EXPOSE 3000
-COPY ./default.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/build /usr/share/nginx/html
