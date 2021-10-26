@@ -1,0 +1,8 @@
+FROM nginx
+# if custom nging.conf file is not defined
+# the default.conf file from base nginx image
+# will be used, it will be automatically aplied
+# with this command default.conf file in
+# /etc/nginx/conf.d/default.conf
+# will be overwritten
+COPY ./default.conf /etc/nginx/conf.d/default.conf
