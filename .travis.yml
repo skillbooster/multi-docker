@@ -1,0 +1,29 @@
+sudo: required
+services:
+  - docker
+
+before_intstall:
+  - docker build -t skillboost/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true skillboost/react-test npm run test -- --coverage
+
+# starting client build process
+after_success:
+  # default Dockerfile will be used
+  - docker build -t skillboost/multi-client ./client
+  - docker build -t skillboost/multi-nginx ./nginx
+  - docker build -t skillboost/multi-server ./server
+  - docker build -t skillboost/multi-worker ./worker
+  # Log in to Docker CLI
+  # passing credentials with --password-stdin
+  # so those are automatically typed in the
+  # log in process
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push skillboost/multi-client
+  - docker push skillboost/multi-nginx
+  - docker push skillboost/multi-server
+  - docker push skillboost/multi-worker
+
+
