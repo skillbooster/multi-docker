@@ -1,4 +1,6 @@
-FROM node:alpine as builder
+# FROM node:alpine as builder
+# FOR envelopes ERROR
+FROM node:16-alpine3.12 as builder
 WORKDIR '/app'
 COPY package.json .
 RUN npm install
