@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-client:
+
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #   matrix:
+    #     node-version: [10.x, 12.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build client docker
+        run: docker build ./client --file ./client/Dockerfile.dev --tag skillboost/multi-docker
+        # :$(date +%s) - to add time
+      # - name: Use Node.js ${{ matrix.node-version }}
+      #   uses: actions/setup-node@v1
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
+      - name: Run tests for client
+        run: docker run skillboost/multi-docker npm run test -- --coverage
+        env:
+          CI: true
+      - name: Build services
+        run: docker build ./client --tag skillboost/multi-client
+        run: docker build ./nginx --tag skillboost/multi-nginx
+        run: docker build ./server --tag skillboost/multi-server
+        run: docker build ./worker --tag skillboost/multi-worker
+        run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+        run: docker push skillboost/multi-client
+        run: docker push skillboost/multi-nginx
+        run: docker push skillboost/multi-server
+        run: docker push skillboost/multi-worker
+
+# before_intstall:
+#   - docker build -t skillboost/docker-react-test -f ./client/Dockerfile.dev ./client
+
+# script:
+#   - docker run -e CI=true skillboost/react-test npm run test -- --coverage
+
+# # starting client build process
+# after_success:
+#   # default Dockerfile will be used
+#   - docker build -t skillboost/multi-client ./client
+#   - docker build -t skillboost/multi-nginx ./nginx
+#   - docker build -t skillboost/multi-server ./server
+#   - docker build -t skillboost/multi-worker ./worker
+#   # Log in to Docker CLI
+#   # Log in to Docker CLI
+#   # passing credentials with --password-stdin
+#   # so those are automatically typed in the
+#   # log in process
+#   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+#   # Take those images and push them to docker hub
+#   - docker push skillboost/multi-client
+#   - docker push skillboost/multi-nginx
+#   - docker push skillboost/multi-server
+#   - docker push skillboost/multi-worker
+
+# name: Node.js CI
+
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+
+# jobs:
+#   build:
+
+#     runs-on: ubuntu-latest
+
+#     strategy:
+#       matrix:
+#         node-version: [10.x, 12.x, 14.x, 15.x]
+
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Use Node.js ${{ matrix.node-version }}
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: ${{ matrix.node-version }}
+#       - name: Install dependencies
+#         run: npm ci
+#       - run: npm run build --if-present
+#       - run: npm test

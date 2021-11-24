@@ -26,5 +26,3 @@ after_success:
   - docker push skillboost/multi-nginx
   - docker push skillboost/multi-server
   - docker push skillboost/multi-worker
-
-
