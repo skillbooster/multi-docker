@@ -34,7 +34,7 @@ jobs:
       - run: docker build ./server --tag skillboost/multi-server
       - run: docker build ./worker --tag skillboost/multi-worker
       # Must provide --username with --password-stdin
-      - run: echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_ID" --password-stdin
+      - run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_ID }} --password-stdin
       # - run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
       - run: docker push skillboost/multi-client
       - run: docker push skillboost/multi-nginx
