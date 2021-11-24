@@ -25,7 +25,7 @@ jobs:
       #   with:
       #     node-version: ${{ matrix.node-version }}
       - name: Run tests for client
-        run: docker run skillboost/multi-docker npm run test
+        run: docker run -e CI=true skillboost/multi-docker npm run test
         # run: docker run skillboost/multi-docker npm run test -- --coverage
         env:
           CI: true
