@@ -28,16 +28,15 @@ jobs:
         run: docker run skillboost/multi-docker npm run test -- --coverage
         env:
           CI: true
-      - name: Build services
-        run: docker build ./client --tag skillboost/multi-client
-        run: docker build ./nginx --tag skillboost/multi-nginx
-        run: docker build ./server --tag skillboost/multi-server
-        run: docker build ./worker --tag skillboost/multi-worker
-        run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
-        run: docker push skillboost/multi-client
-        run: docker push skillboost/multi-nginx
-        run: docker push skillboost/multi-server
-        run: docker push skillboost/multi-worker
+      - run: docker build ./client --tag skillboost/multi-client
+      - run: docker build ./nginx --tag skillboost/multi-nginx
+      - run: docker build ./server --tag skillboost/multi-server
+      - run: docker build ./worker --tag skillboost/multi-worker
+      - run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+      - run: docker push skillboost/multi-client
+      - run: docker push skillboost/multi-nginx
+      - run: docker push skillboost/multi-server
+      - run: docker push skillboost/multi-worker
 
 # before_intstall:
 #   - docker build -t skillboost/docker-react-test -f ./client/Dockerfile.dev ./client
