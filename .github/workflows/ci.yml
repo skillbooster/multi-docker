@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-client:
+  build-services:
 
     runs-on: ubuntu-latest
 
@@ -47,6 +47,26 @@ jobs:
       - run: docker push skillboost/multi-nginx
       - run: docker push skillboost/multi-server
       - run: docker push skillboost/multi-worker
+      -
+        name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          application_name: multi-docker
+          environment_name: Multidocker-env
+          version_label: ${{ github.SHA }}
+          region: us-east-2
+
+# POSTGRES
+# databasename: fibvalues
+# database: postgres
+# databasepass: postgres_password
+# port: 5432
+
+# REDIS
+# PORT: 6379
+
 
 # before_intstall:
 #   - docker build -t skillboost/docker-react-test -f ./client/Dockerfile.dev ./client
@@ -100,3 +120,34 @@ jobs:
 #         run: npm ci
 #       - run: npm run build --if-present
 #       - run: npm test
+
+# deploy:
+#   provider: elasticbeanstalk
+#   # taken from available address to the server
+#   # "...".us-east-2.elasticbeanstalk.com
+#   region: "us-east-2"
+#   # app name
+#   app: "docker-react-test"
+#   # env created by AWS EBS
+#   env: "Dockerreacttest-env"
+#   # when travis deploys takes all the code base
+#   # files and zip them all up into 1 single file
+#   # and copy it to S3 bucket
+#   # it's a name of S3 bucket the file will
+#   # be put into
+#   bucket_name: "elasticbeanstalk-us-east-2-290622572962"
+#   # path to the bucket
+#   # default is the name of the app
+#   # docker-react-test
+#   # after deploy, folder will be put
+#   # with the name same or similar to the name
+#   # of the app within the S3 bucket as a folder
+#   bucket_path: "docker-react-test"
+#   # this happens only if there are commits
+#   # pushed to master branch
+#   # there will be buffer branch named feature
+#   on:
+#     branch: master
+#   access_key_id: $AWS_ACCESS_KEY
+#   secret_access_key: $AWS_SECRET_KEY
+#   # secure: $AWS_SECRET_KEY
