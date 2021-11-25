@@ -48,6 +48,9 @@ jobs:
       - run: docker push skillboost/multi-server
       - run: docker push skillboost/multi-worker
       -
+        name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+      -
         name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v18
         with:
@@ -57,6 +60,7 @@ jobs:
           environment_name: Multidocker-env
           version_label: ${{ github.SHA }}
           region: us-east-2
+          deployment_package: deploy.zip
 
 # POSTGRES
 # databasename: fibvalues
