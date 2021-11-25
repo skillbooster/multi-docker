@@ -47,9 +47,9 @@ jobs:
       - run: docker push skillboost/multi-nginx
       - run: docker push skillboost/multi-server
       - run: docker push skillboost/multi-worker
-      -
-        name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*'
+      # -
+      #   name: Generate deployment package
+      #   run: zip -r deploy.zip . -x '*.git*'
       -
         name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v18
@@ -60,7 +60,9 @@ jobs:
           environment_name: Multidocker-env
           version_label: ${{ github.SHA }}
           region: us-east-2
-          deployment_package: deploy.zip
+          # deployment_package: deploy.zip
+          deployment_package: docker-compose.yml
+          existing_bucket_name: elasticbeanstalk-us-east-2-290622572962
 
 # POSTGRES
 # databasename: fibvalues
