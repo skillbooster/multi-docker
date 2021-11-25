@@ -72,13 +72,10 @@ jobs:
       #   aws-access-key-id: ${{ secrets.AWS_ACCESS_ID }}
       #   aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
       #   aws-region: ${{ inputs.AWS-REGION }}
-
       - name: Create new ElasticBeanstalk Applicaiton Version
-        run: >
-        aws elasticbeanstalk create-application-version --application-name multi-docker --version-label "Ver-${{ github.sha }}" --description "CommitSHA-${{ github.sha }}" --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
+        run: aws elasticbeanstalk create-application-version --application-name multi-docker --version-label "Ver-${{ github.sha }}" --description "CommitSHA-${{ github.sha }}" --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
       - name: Deploy our new Application Version
         run: aws elasticbeanstalk update-environment --environment-name Multidocker-env --version-label "Ver-${{ github.sha }}"
-
       - name: Message on completion of CD Pipeline
         run: echo "CD Pipeline part finished successfully"
       # aws elasticbeanstalk create-application-version \
