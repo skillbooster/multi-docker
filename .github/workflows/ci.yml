@@ -74,7 +74,8 @@ jobs:
       #   aws-region: ${{ inputs.AWS-REGION }}
 
       - name: Create new ElasticBeanstalk Applicaiton Version
-        run : aws elasticbeanstalk create-application-version
+        run : >
+        aws elasticbeanstalk create-application-version
         --application-name multi-docker
         --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
         --version-label "Ver-${{ github.sha }}"
