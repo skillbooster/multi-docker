@@ -52,6 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-services]
     steps:
+      - name: clone-our-repo
+        uses: actions/checkout@v2
       - name: configure aws auth
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -59,7 +61,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: us-east-2
       - name: copy deployment package to s3
-        run: aws s3 cp ./docker-compose.yml s3://elasticbeanstalk-us-east-2-290622572962/docker-compose.yml
+        run: aws s3 cp docker-compose.yml s3://elasticbeanstalk-us-east-2-290622572962/docker-compose.yml
       - name: Message on completion of CI Pipeline
         run: echo "CI Pipeline part finished successfully"
   # my-cd-pipeline:
