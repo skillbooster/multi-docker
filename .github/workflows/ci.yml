@@ -75,11 +75,7 @@ jobs:
 
       - name: Create new ElasticBeanstalk Applicaiton Version
         run: >
-        aws elasticbeanstalk create-application-version
-        --application-name multi-docker
-        --version-label "Ver-${{ github.sha }}"
-        --description "CommitSHA-${{ github.sha }}"
-        --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
+        aws elasticbeanstalk create-application-version --application-name multi-docker --version-label "Ver-${{ github.sha }}" --description "CommitSHA-${{ github.sha }}" --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
       - name: Deploy our new Application Version
         run: aws elasticbeanstalk update-environment --environment-name Multidocker-env --version-label "Ver-${{ github.sha }}"
 
