@@ -1,85 +1,139 @@
-name: CI
-
+name: Deploy MultiDocker
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    branches:
+      - main
 
 jobs:
-  build-services:
-
+  build:
     runs-on: ubuntu-latest
-
-    # strategy:
-    #   matrix:
-    #     node-version: [10.x, 12.x]
-
     steps:
       - uses: actions/checkout@v2
-      - name: Build client docker
-        run: docker build ./client --file ./client/Dockerfile.dev --tag skillboost/multi-docker
-        # :$(date +%s) - to add time
-      # - name: Use Node.js ${{ matrix.node-version }}
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: ${{ matrix.node-version }}
-      - name: Run tests for client
-        run: docker run -e CI=true skillboost/multi-docker npm run test
-        # run: docker run skillboost/multi-docker npm run test -- --coverage
-        env:
-          CI: true
-      - run: docker build ./client --tag skillboost/multi-client
-      - run: docker build ./nginx --tag skillboost/multi-nginx
-      - run: docker build ./server --tag skillboost/multi-server
-      - run: docker build ./worker --tag skillboost/multi-worker
-      # Must provide --username with --password-stdin
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_ID }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      # - run: docker login --username ${{ secrets.DOCKER_ID }} --password-stdin ${{ secrets.DOCKER_PASSWORD }}
-      # - run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_ID }} --password-stdin
-      # - run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
-      - run: docker push skillboost/multi-client
-      - run: docker push skillboost/multi-nginx
-      - run: docker push skillboost/multi-server
-      - run: docker push skillboost/multi-worker
+      - run: docker login -u ${{ secrets.DOCKER_ID }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - run: docker build -t skillboost/react-test -f ./client/Dockerfile.dev ./client
+      - run: docker run -e CI=true skillboost/react-test npm test
 
-  my-ci-pipeline:
-    runs-on: ubuntu-latest
-    needs: [build-services]
-    steps:
-      - name: clone-our-repo
-        uses: actions/checkout@v2
-      - name: configure aws auth
-        uses: aws-actions/configure-aws-credentials@v1
+      - run: docker build -t skillboost/multi-client-10-14 ./client
+      - run: docker build -t skillboost/multi-nginx-10-14 ./nginx
+      - run: docker build -t skillboost/multi-server-10-14 ./server
+      - run: docker build -t skillboost/multi-worker-10-14 ./worker
+
+      - run: docker push skillboost/multi-client-10-14
+      - run: docker push skillboost/multi-nginx-10-14
+      - run: docker push skillboost/multi-server-10-14
+      - run: docker push skillboost/multi-worker-10-14
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: us-east-2
-      - name: copy deployment package to s3
-        run: aws s3 cp docker-compose.yml s3://elasticbeanstalk-us-east-2-290622572962/docker-compose.yml
-      - name: Message on completion of CI Pipeline
-        run: echo "CI Pipeline part finished successfully"
-  # my-cd-pipeline:
-  #   runs-on: ubuntu-latest
-  #   needs: [my-ci-pipeline]
-  #   steps:
-      # - name: Configure my AWS Credentils
-      #   uses: aws-actions/configure-aws-credentials@v1
+          aws_access_key: ${{ secrets.AWS_ACCESS_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          application_name: multi-docker
+          environment_name: Multidocker-env
+          existing_bucket_name: elasticbeanstalk-us-east-2-290622572962
+          region: us-east-2
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
+
+      #   uses: einaregilsson/beanstalk-deploy@v18
       #   with:
-      #   aws-access-key-id: ${{ secrets.AWS_ACCESS_ID }}
-      #   aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-      #   aws-region: ${{ inputs.AWS-REGION }}
-      - name: Create new ElasticBeanstalk Applicaiton Version
-        run: aws elasticbeanstalk create-application-version --application-name multi-docker --version-label "Ver-${{ github.sha }}" --description "CommitSHA-${{ github.sha }}" --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
-      - name: Deploy our new Application Version
-        run: aws elasticbeanstalk update-environment --environment-name Multidocker-env --version-label "Ver-${{ github.sha }}"
-      - name: Message on completion of CD Pipeline
-        run: echo "CD Pipeline part finished successfully"
+      #     aws_access_key: ${{ secrets.AWS_ACCESS_ID }}
+      #     aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+      #     application_name: multi-docker
+      #     environment_name: Multidocker-env
+      #     version_label: ${{ github.SHA }}
+      #     region: us-east-2
+      #     # deployment_package: deploy.zip
+
+
+#       # OLD SOLUTION START //////////////////
+# name: CI
+
+# on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     branches: [ master ]
+
+# jobs:
+#   build-services:
+
+#     runs-on: ubuntu-latest
+
+#     # strategy:
+#     #   matrix:
+#     #     node-version: [10.x, 12.x]
+
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Build client docker
+#         run: docker build ./client --file ./client/Dockerfile.dev --tag skillboost/multi-docker
+#         # :$(date +%s) - to add time
+#       # - name: Use Node.js ${{ matrix.node-version }}
+#       #   uses: actions/setup-node@v1
+#       #   with:
+#       #     node-version: ${{ matrix.node-version }}
+#       - name: Run tests for client
+#         run: docker run -e CI=true skillboost/multi-docker npm run test
+#         # run: docker run skillboost/multi-docker npm run test -- --coverage
+#         env:
+#           CI: true
+#       - run: docker build ./client --tag skillboost/multi-client
+#       - run: docker build ./nginx --tag skillboost/multi-nginx
+#       - run: docker build ./server --tag skillboost/multi-server
+#       - run: docker build ./worker --tag skillboost/multi-worker
+#       # Must provide --username with --password-stdin
+#       -
+#         name: Login to Docker Hub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKER_ID }}
+#           password: ${{ secrets.DOCKER_PASSWORD }}
+#       # - run: docker login --username ${{ secrets.DOCKER_ID }} --password-stdin ${{ secrets.DOCKER_PASSWORD }}
+#       # - run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_ID }} --password-stdin
+#       # - run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+#       - run: docker push skillboost/multi-client
+#       - run: docker push skillboost/multi-nginx
+#       - run: docker push skillboost/multi-server
+#       - run: docker push skillboost/multi-worker
+
+#   my-ci-pipeline:
+#     runs-on: ubuntu-latest
+#     needs: [build-services]
+#     steps:
+#       - name: clone-our-repo
+#         uses: actions/checkout@v2
+#       - name: configure aws auth
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+#           aws-region: us-east-2
+#       - name: copy deployment package to s3
+#         run: aws s3 cp docker-compose.yml s3://elasticbeanstalk-us-east-2-290622572962/docker-compose.yml
+#       - name: Message on completion of CI Pipeline
+#         run: echo "CI Pipeline part finished successfully"
+#   # my-cd-pipeline:
+#   #   runs-on: ubuntu-latest
+#   #   needs: [my-ci-pipeline]
+#   #   steps:
+#       # - name: Configure my AWS Credentils
+#       #   uses: aws-actions/configure-aws-credentials@v1
+#       #   with:
+#       #   aws-access-key-id: ${{ secrets.AWS_ACCESS_ID }}
+#       #   aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+#       #   aws-region: ${{ inputs.AWS-REGION }}
+#       - name: Create new ElasticBeanstalk Applicaiton Version
+#         run: aws elasticbeanstalk create-application-version --application-name multi-docker --version-label "Ver-${{ github.sha }}" --description "CommitSHA-${{ github.sha }}" --source-bundle S3Bucket=elasticbeanstalk-us-east-2-290622572962,S3Key=docker-compose.yml
+#       - name: Deploy our new Application Version
+#         run: aws elasticbeanstalk update-environment --environment-name Multidocker-env --version-label "Ver-${{ github.sha }}"
+#       - name: Message on completion of CD Pipeline
+#         run: echo "CD Pipeline part finished successfully"
+#       # OLD SOLUTION FINISH //////////////////
+
       # aws elasticbeanstalk create-application-version \
       # --application-name multi-docker \
       # --source-bundle S3Bucket="elasticbeanstalk-us-east-2-290622572962",S3Key="docker-compose.yml" \
